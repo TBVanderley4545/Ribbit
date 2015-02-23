@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -19,8 +20,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.parse.ParseAnalytics;
+import com.parse.ParseUser;
+
 
 public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
+
+    // Create the tag variable
+    public static final String TAG = MainActivity.class.getSimpleName();
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -42,13 +49,18 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Hey Ty, this is important. This intent is what allows us to begin using the login activity on our main activity.
-        Intent intent = new Intent(this, LoginActivity.class);
-        // These flags make it so the back button doesn't allow the user a backdoor into the inbox.
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        // Don't forget that.
+        ParseAnalytics.trackAppOpenedInBackground(getIntent());
+
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        if(currentUser == null)
+        {
+            // We created this method to bring us back to the login screen.
+            navigateToLogin();
+        }
+        else
+        {
+            Log.i(TAG, currentUser.getUsername());
+        }
 
         // Set up the action bar.
         final ActionBar actionBar = getSupportActionBar();
@@ -85,6 +97,16 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
         }
     }
 
+    private void navigateToLogin() {
+        // Hey Ty, this is important. This intent is what allows us to begin using the login activity on our main activity.
+        Intent intent = new Intent(this, LoginActivity.class);
+        // These flags make it so the back button doesn't allow the user a backdoor into the inbox.
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        // Don't forget that.
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -93,16 +115,15 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
         return true;
     }
 
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        int itemId = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        if (itemId == R.id.action_logout)
+        {
+            ParseUser.logOut();
+            navigateToLogin();
         }
 
         return super.onOptionsItemSelected(item);
